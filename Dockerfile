@@ -11,6 +11,7 @@ COPY "pyproject.toml" "uv.lock" ".python-version" ./
 # 2. Dodana flaga ignorująca brak folderu src/
 RUN uv sync --locked --no-install-project
 
-COPY 01_docker_terraform/pipeline/pipeline.py .
+# COPY 01_docker_terraform/pipeline/pipeline.py .
+COPY ingest_data.py .
 
-ENTRYPOINT ["python", "pipeline.py"]
+ENTRYPOINT ["python", "ingest_data.py"]

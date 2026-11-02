@@ -4,22 +4,30 @@
 import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
+import click
 
-def run():
+@click.command()
+@click.option('--pg_user', default='root', help='PostgreSQL user')
+@click.option('--pg_pass', default='root', help='PostgreSQL password')
+@click.option('--pg_host', default='localhost', help='PostgreSQL host')
+@click.option('--pg_port', default=5432, help='PostgreSQL port')
+@click.option('--pg_db', default='ny_taxi', help='PostgreSQL database')
+@click.option('--target_table', default='yellow_taxi_data', help='Target table name')
+
+def run(pg_user, pg_pass, pg_host, pg_port, pg_db, target_table):
     # 1. Zmienne konfiguracyjne
     year = 2021
     month = 1
-    
-    pguser = 'root'
-    pgpassword = 'root'
-    pg_host = 'localhost'
-    pg_port = 5432
-    pg_db = 'ny_taxi'
-    table_name = 'yellow_taxi_data'
-    chunk_size = 100000
-
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
     file_url = prefix + f'yellow_tripdata_{year}-{month:02d}.csv.gz'
+    chunk_size = 100000
+    
+    pguser = pg_user
+    pgpassword = pg_pass
+    pg_host = pg_host
+    pg_port = pg_port
+    pg_db = pg_db
+    target_table = target_table
 
     # 2. Definicja typów danych
     dtype = {
@@ -60,15 +68,15 @@ def run():
     # 5. Inicjalizacja pierwszej paczki i założenie tabeli
     first_chunk = next(df_iter)
     
-    first_chunk.head(0).to_sql(name=table_name, con=engine, if_exists="replace")
+    first_chunk.head(0).to_sql(name=target_table, con=engine, if_exists="replace")
     print("Struktura tabeli została utworzona.")
 
-    first_chunk.to_sql(name=table_name, con=engine, if_exists="append")
+    first_chunk.to_sql(name=target_table, con=engine, if_exists="append")
     print(f"Wstawiono pierwszą paczkę: {len(first_chunk)} wierszy.")
 
     # 6. Pętla główna wstawiająca resztę pliku
     for df_chunk in tqdm(df_iter):
-        df_chunk.to_sql(name=table_name, con=engine, if_exists="append")
+        df_chunk.to_sql(name=target_table, con=engine, if_exists="append")
 
     print("Zakończono wgrywanie danych pomyślnie!")
 

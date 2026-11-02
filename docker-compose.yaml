@@ -1,0 +1,49 @@
+services:
+  pg-database:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+    volumes:
+      - ny_taxi_postgres_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    networks:
+      - pg-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8085:80"
+    networks:
+      - pg-network
+    depends_on:
+      - pg-database
+
+  taxi_ingest:
+    image: taxi_ingest:v001
+    container_name: taxi_ingest
+    command: >
+      --pg_user=root
+      --pg_pass=root
+      --pg_host=pg-database
+      --pg_port=5432
+      --pg_db=ny_taxi
+      --target_table=yellow_taxi_trips
+    networks:
+      - pg-network
+    depends_on:
+      - pg-database
+
+volumes:
+  ny_taxi_postgres_data:
+  pgadmin_data:
+
+networks:
+  pg-network:
